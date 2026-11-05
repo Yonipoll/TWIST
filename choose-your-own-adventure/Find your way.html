@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>The way home</title>
+
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #101713;
+    color: #71947a;
+  }
+
+  .intro {
+    padding: 40px 20px;
+    text-align: center;
+    direction: rtl;
+    font: 16px Arial, sans-serif;
+    color: #ccd8c8;
+  }
+
+  #forest {
+    margin: 0 auto;
+    padding-bottom: 60px;
+    width: max-content;
+    font: 16px/19px "Courier New", monospace;
+    white-space: pre;
+    direction: ltr;
+    user-select: none;
+  }
+
+  .trail {
+    color: #d2c29c;
+    text-shadow: 0 0 8px #d2c29c44;
+  }
+</style>
+</head>
+
+<body>
+<p>Through the forbidden AI-code forest</p>
+<p>Find your way</p>
+<p>Back to a human hand-made home</p>
+
+<pre id="forest"></pre>
+
+<script>
+  const forest = document.getElementById("forest");
+
+  const rows = 680;
+  const pathWidth = 5;
+
+  function noise(x, y) {
+    const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    return n - Math.floor(n);
+  }
+
+  function drawForest() {
+    const characterWidth = 9.6;
+    const columns = Math.max(
+      24,
+      Math.min(150, Math.floor((window.innerWidth - 24) / characterWidth))
+    );
+
+    const fragment = document.createDocumentFragment();
+
+    for (let y = 0; y < rows; y++) {
+      const curve =
+        Math.sin(y * 0.035) * 0.70 +
+        Math.sin(y * 0.013 + 1.5) * 0.30;
+
+      const amplitude = Math.max(0, (columns - pathWidth - 6) / 2);
+      const center = Math.round(columns / 2 + curve * amplitude);
+      const left = center - Math.floor(pathWidth / 2);
+      const right = left + pathWidth;
+
+      let before = "";
+      let after = "";
+
+      for (let x = 0; x < columns; x++) {
+        const n = noise(x, y);
+        const character = n < 0.14 ? " " : n < 0.57 ? "/" : "\\";
+
+        if (x < left) before += character;
+        if (x >= right) after += character;
+      }
+
+      fragment.append(document.createTextNode(before));
+
+      const trail = document.createElement("span");
+      trail.className = "trail";
+      trail.textContent = " ".repeat(pathWidth);
+
+      fragment.append(trail);
+      fragment.append(document.createTextNode(after + "\n"));
+    }
+
+    forest.replaceChildren(fragment);
+
+    const walker = document.createTreeWalker(
+      forest,
+      NodeFilter.SHOW_TEXT
+    );
+
+    const slashes = [];
+    let node;
+
+    while ((node = walker.nextNode()) !== null) {
+      for (let i = 0; i < node.textContent.length; i++) {
+        if (node.textContent[i] === "/") {
+          slashes.push({ node: node, index: i });
+        }
+      }
+    }
+
+    if (slashes.length > 0) {
+      const selected = slashes[
+        Math.floor(Math.random() * slashes.length)
+      ];
+
+      const slash = selected.node.splitText(selected.index);
+      slash.splitText(1);
+
+      const link = document.createElement("a");
+      link.href = "story.html";
+      link.textContent = "/";
+      link.title = "Go on";
+      link.style.color = "red";
+      link.style.textDecoration = "none";
+
+      slash.replaceWith(link);
+    }
+  }
+
+  drawForest();
+  window.addEventListener("resize", drawForest);
+</script>
+</body>
+</html>
